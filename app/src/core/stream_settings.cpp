@@ -59,9 +59,13 @@ StreamSettings Normalize(StreamSettings settings)
         settings.controller_layout = "Switch";
     if (!OneOf(settings.library_layout, {"Covers", "List"}))
         settings.library_layout = "Covers";
-    if (!OneOf(settings.language, {"de", "en", "es", "fr", "it", "pt", "ru", "zh"}))
+    if (!OneOf(settings.language, {"de", "en", "es", "fr", "it", "nl", "pl", "pt", "ru", "sv", "zh"}))
         settings.language = "en";
+<<<<<<< HEAD
     if (!OneOf(settings.amazon_market, {"fr", "de", "co.uk", "es", "it", "com", "ca", "pl"}))
+=======
+    if (!OneOf(settings.amazon_market, {"fr", "de", "co.uk", "es", "it", "pl", "nl", "se", "com.be", "at", "pt", "lu", "com", "ca"}))
+>>>>>>> f09d22d47520407b403291cffbdde96004257e77
         settings.amazon_market.clear();
     if (settings.region.empty())
         settings.region = "Auto";

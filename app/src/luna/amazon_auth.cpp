@@ -192,6 +192,7 @@ std::string ErrorFrom(const HttpResponse& response)
 const std::vector<AmazonMarket>& AmazonMarkets()
 {
     static const std::vector<AmazonMarket> markets = {
+<<<<<<< HEAD
         {"fr", "France (amazon.fr)", "amzn_audible_ios_fr", "amzn_audible_ios", "api.amazon.fr",
          false, "A13V1IB3VIYZZH", "fr", "France"},
         {"de", "Allemagne (amazon.de)", "amzn_audible_ios_de", "amzn_audible_ios", "api.amazon.de",
@@ -212,6 +213,42 @@ const std::vector<AmazonMarket>& AmazonMarkets()
         // lui, est chargé en pl_PL grâce à l'entrée correspondante de kMarketplaces.
         {"pl", "Pologne (amazon.pl)", "tempo_pl", "tempo_pl", "api.amazon.com", true,
          "A1C3SOZRARQ6R3", "en", "Polska"},
+=======
+        // code, libellé, suffixe Audible, place de marché, langue, nom local,
+        // boutique, domaine de connexion, pays, langue Luna, fuseau horaire
+        {"fr", "France (amazon.fr)", "fr", "A13V1IB3VIYZZH", "fr", "France",
+         "fr", "fr", "FR", "fr_FR", "Europe/Paris"},
+        {"de", "Allemagne (amazon.de)", "de", "A1PA6795UKMFR9", "de", "Deutschland",
+         "de", "de", "DE", "de_DE", "Europe/Berlin"},
+        {"co.uk", "Royaume-Uni (amazon.co.uk)", "uk", "A1F83G8C2ARO7P", "en", "United Kingdom",
+         "co.uk", "co.uk", "GB", "en_GB", "Europe/London"},
+        {"es", "Espagne (amazon.es)", "es", "A1RKKUPIHCS9HS", "es", "España",
+         "es", "es", "ES", "es_ES", "Europe/Madrid"},
+        {"it", "Italie (amazon.it)", "it", "APJ6JRA9NG5V4", "it", "Italia",
+         "it", "it", "IT", "it_IT", "Europe/Rome"},
+        // Connexion par amazon.de (voir AmazonMarket::identity_code) : avec la place de marché du
+        // pays, Amazon affiche sa page de connexion dans la langue de la boutique.
+        {"pl", "Pologne (amazon.pl)", "de", "A1C3SOZRARQ6R3", "pl", "Polska",
+         "pl", "de", "PL", "pl_PL", "Europe/Warsaw"},
+        {"nl", "Pays-Bas (amazon.nl)", "de", "A1805IZSGTT6HS", "nl", "Nederland",
+         "nl", "de", "NL", "nl_NL", "Europe/Amsterdam"},
+        {"se", "Suède (amazon.se)", "de", "A2NODRKZP88ZB9", "sv", "Sverige",
+         "se", "de", "SE", "sv_SE", "Europe/Stockholm"},
+        // Belgique : Luna y sert le néerlandais par défaut.
+        {"com.be", "Belgique (amazon.com.be)", "de", "AMEN7PMS3EDWL", "nl", "België / Belgique",
+         "com.be", "de", "BE", "nl_NL", "Europe/Brussels"},
+        // Pays sans boutique Amazon propre (voir AmazonMarket::domain), langues par défaut de Luna.
+        {"at", "Autriche (amazon.de)", "de", "A1PA6795UKMFR9", "de", "Österreich",
+         "de", "de", "AT", "de_DE", "Europe/Vienna"},
+        {"pt", "Portugal (amazon.es)", "es", "A1RKKUPIHCS9HS", "pt", "Portugal",
+         "es", "es", "PT", "pt_PT", "Europe/Lisbon"},
+        {"lu", "Luxembourg (amazon.de)", "de", "A1PA6795UKMFR9", "fr", "Lëtzebuerg",
+         "de", "de", "LU", "fr_FR", "Europe/Luxembourg"},
+        {"com", "États-Unis (amazon.com)", "us", "ATVPDKIKX0DER", "en", "United States",
+         "com", "com", "US", "en_US", "America/New_York"},
+        {"ca", "Canada (amazon.ca)", "ca", "A2EUQ1WTGCTBG2", "en", "Canada",
+         "ca", "ca", "CA", "en_CA", "America/Toronto"},
+>>>>>>> f09d22d47520407b403291cffbdde96004257e77
     };
     return markets;
 }
@@ -242,7 +279,7 @@ PendingSignIn AmazonAuth::BeginSignIn(const std::string& market_code)
                    pending.code_verifier.size(), digest, 0);
     const std::string challenge = Base64Url(digest, sizeof(digest));
 
-    const std::string base = "https://www.amazon." + market.code;
+    const std::string base = "https://www.amazon." + market.identity_code;
     pending.callback_url = base + "/ap/maplanding";
     const std::string identifier = "http://specs.openid.net/auth/2.0/identifier_select";
     pending.sign_in_url = base + "/ap/signin"
@@ -282,9 +319,13 @@ std::string AmazonAuth::ExtractAuthorizationCode(const std::string& final_url)
 DeviceRegistration AmazonAuth::Register(const PendingSignIn& pending, const std::string& authorization_code)
 {
     const AmazonMarket& market = FindAmazonMarket(pending.market_code);
+<<<<<<< HEAD
     const DeviceProfile& profile = ProfileFor(market);
     const std::string domain = "." + std::string("amazon.") + market.code;
     const std::string client_id = ClientId(pending.device_serial, profile.device_type);
+=======
+    const std::string domain = ".amazon." + market.domain;
+>>>>>>> f09d22d47520407b403291cffbdde96004257e77
 
     JsonPtr body(json_pack(
         "{s:[s,s,s], s:{s:[], s:s}, s:{s:s, s:s, s:s, s:s, s:s, s:s, s:s, s:s, s:s}, "
@@ -315,9 +356,15 @@ DeviceRegistration AmazonAuth::Register(const PendingSignIn& pending, const std:
     HttpClient http;
     const std::string api_base = "https://" + market.api_domain;
     const HttpResponse response = http.Post(
+<<<<<<< HEAD
         api_base + "/auth/register", profile.user_agent,
         {"Content-Type: application/json", "Accept: application/json",
          "x-amzn-identity-auth-domain: " + market.api_domain},
+=======
+        "https://api.amazon." + market.identity_code + "/auth/register", kMobileUserAgent,
+        {"Content-Type: application/json", "Accept: application/json",
+         "x-amzn-identity-auth-domain: api.amazon." + market.identity_code},
+>>>>>>> f09d22d47520407b403291cffbdde96004257e77
         payload);
     if (response.status_code != 200)
         throw LunaError(TrFormat("Enregistrement de l'appareil refusé : {}", {ErrorFrom(response)}));
@@ -349,8 +396,12 @@ DeviceRegistration AmazonAuth::Register(const PendingSignIn& pending, const std:
 std::vector<Cookie> AmazonAuth::RefreshCookies(const DeviceRegistration& registration)
 {
     const AmazonMarket& market = FindAmazonMarket(registration.market_code);
+<<<<<<< HEAD
     const DeviceProfile& profile = ProfileFor(market);
     const std::string domain = ".amazon." + market.code;
+=======
+    const std::string domain = ".amazon." + market.domain;
+>>>>>>> f09d22d47520407b403291cffbdde96004257e77
     const std::string body =
         "app_name=" + std::string(profile.app_name) +
         "&app_version=" + profile.app_version +
@@ -361,9 +412,15 @@ std::vector<Cookie> AmazonAuth::RefreshCookies(const DeviceRegistration& registr
 
     HttpClient http;
     const HttpResponse response = http.Post(
+<<<<<<< HEAD
         "https://www.amazon." + market.code + "/ap/exchangetoken/cookies", profile.user_agent,
         {"Content-Type: application/x-www-form-urlencoded",
          "x-amzn-identity-auth-domain: " + market.api_domain},
+=======
+        "https://www.amazon." + market.domain + "/ap/exchangetoken/cookies", kMobileUserAgent,
+        {"Content-Type: application/x-www-form-urlencoded",
+         "x-amzn-identity-auth-domain: api.amazon." + market.identity_code},
+>>>>>>> f09d22d47520407b403291cffbdde96004257e77
         body);
     if (response.status_code == 400 || response.status_code == 401)
         throw SignInRequired(Tr("L'appareil a été déconnecté du compte Amazon"));
@@ -392,7 +449,11 @@ void AmazonAuth::Deregister(const DeviceRegistration& registration)
     HttpClient http;
     // Un jeton d'accès frais est nécessaire : on l'obtient à partir du jeton de renouvellement.
     const HttpResponse token = http.Post(
+<<<<<<< HEAD
         api_base + "/auth/token", profile.user_agent,
+=======
+        "https://api.amazon." + market.identity_code + "/auth/token", kMobileUserAgent,
+>>>>>>> f09d22d47520407b403291cffbdde96004257e77
         {"Content-Type: application/x-www-form-urlencoded"},
         "app_name=" + std::string(profile.app_name) + "&app_version=" + profile.app_version +
             "&source_token=" + UrlEncode(registration.refresh_token) +
@@ -402,7 +463,11 @@ void AmazonAuth::Deregister(const DeviceRegistration& registration)
     const std::string access_token = Str(root.get(), "access_token");
     if (access_token.empty())
         return;
+<<<<<<< HEAD
     http.Post(api_base + "/auth/deregister", profile.user_agent,
+=======
+    http.Post("https://api.amazon." + market.identity_code + "/auth/deregister", kMobileUserAgent,
+>>>>>>> f09d22d47520407b403291cffbdde96004257e77
               {"Content-Type: application/json", "Authorization: Bearer " + access_token},
               "{\"deregister_all_existing_accounts\":false}");
     LogRuntimeEvent("auth", "deregistered", "market=" + market.code);
