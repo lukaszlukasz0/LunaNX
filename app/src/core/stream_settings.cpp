@@ -44,15 +44,27 @@ bool OneOf(const std::string& value, std::initializer_list<const char*> allowed)
                        [&value](const char* item) { return value == item; });
 }
 
+bool OneOfInt(int value, std::initializer_list<int> allowed)
+{
+    return std::find(allowed.begin(), allowed.end(), value) != allowed.end();
+}
+
 StreamSettings Normalize(StreamSettings settings)
 {
-    // Réglages fixes, non proposés dans l'interface : 720p 60 i/s, décodeur logiciel et
-    // traitement adaptatif, la combinaison la plus fluide sur Switch. Ils remplacent toute
-    // valeur enregistrée par une version précédente.
-    settings.preset_id = "720p60";
+    // La résolution et le décodeur restent fixes (720p, logiciel) : c'est la combinaison
+    // la plus fluide sur Switch. Le nombre d'images et le plafond de débit sont réglables
+    // pour les connexions plus lentes.
+    settings.preset_id = "custom";
     settings.video_backend = "Software";
     settings.image_quality_mode = "Adaptive";
-    settings = ApplyStreamPreset(settings, settings.preset_id);
+    settings.width = 1280;
+    settings.height = 720;
+    if (!OneOfInt(settings.fps, {30, 60}))
+        settings.fps = 60;
+    if (settings.bitrate_kbps != 0 &&
+        !OneOfInt(settings.bitrate_kbps, {3000, 4000, 6000, 8000, 10000, 15000}))
+        settings.bitrate_kbps = 10000;
+    settings.label = "720p · " + std::to_string(settings.fps) + " fps";
     settings.audio_volume = std::clamp(settings.audio_volume, 100, 1600);
     settings.audio_buffer_ms = std::clamp(settings.audio_buffer_ms, 30, 100);
     if (!OneOf(settings.controller_layout, {"Xbox", "Switch"}))
@@ -70,37 +82,17 @@ StreamSettings Normalize(StreamSettings settings)
 
 } // namespace
 
-const std::vector<StreamSettings>& StreamPresets()
+StreamBitrateBudget ResolveStreamBitrateBudget(int bitrate_kbps)
 {
-    static const std::vector<StreamSettings> presets = [] {
-        StreamSettings p720;
-        p720.preset_id = "720p60";
-        p720.label = "720p · 60 i/s";
-        p720.width = 1280;
-        p720.height = 720;
-        p720.bitrate_kbps = 10000;
+    // Automatique : Luna peut monter jusqu'à 10 Mb/s, mais démarre prudemment à 6 Mb/s.
+    if (bitrate_kbps <= 0)
+        return {2'000'000u, 6'000'000u, 10'000'000u};
 
-        StreamSettings p1080;
-
-        return std::vector<StreamSettings> {p720, p1080};
-    }();
-    return presets;
-}
-
-StreamSettings ApplyStreamPreset(const StreamSettings& current, const std::string& preset_id)
-{
-    StreamSettings result = current;
-    const auto& presets = StreamPresets();
-    auto found = std::find_if(presets.begin(), presets.end(),
-                              [&preset_id](const StreamSettings& p) { return p.preset_id == preset_id; });
-    const StreamSettings& preset = found != presets.end() ? *found : presets.back();
-    result.preset_id = preset.preset_id;
-    result.label = preset.label;
-    result.width = preset.width;
-    result.height = preset.height;
-    result.fps = preset.fps;
-    result.bitrate_kbps = preset.bitrate_kbps;
-    return result;
+    const auto cap = static_cast<std::uint32_t>(bitrate_kbps) * 1000u;
+    const std::uint32_t floor = 1'000'000u;
+    const std::uint32_t ceiling = 6'000'000u;
+    const std::uint32_t minimum = std::min(cap, std::clamp(cap / 2, floor, ceiling));
+    return {minimum, cap, cap};
 }
 
 StreamSettings LoadStreamSettings()
@@ -113,6 +105,8 @@ StreamSettings LoadStreamSettings()
 
     json_t* r = root.get();
     settings.preset_id = JsonField(r, "preset", settings.preset_id);
+    settings.fps = JsonInt(r, "fps", settings.fps);
+    settings.bitrate_kbps = JsonInt(r, "bitrate_kbps", settings.bitrate_kbps);
     settings.region = JsonField(r, "region", settings.region);
     settings.audio_enabled = JsonBool(r, "audio_enabled", settings.audio_enabled);
     settings.audio_volume = JsonInt(r, "audio_volume", settings.audio_volume);
@@ -134,6 +128,8 @@ bool SaveStreamSettings(const StreamSettings& settings)
     JsonPtr root(json_object(), &json_decref);
     json_t* r = root.get();
     json_object_set_new(r, "preset", json_string(clean.preset_id.c_str()));
+    json_object_set_new(r, "fps", json_integer(clean.fps));
+    json_object_set_new(r, "bitrate_kbps", json_integer(clean.bitrate_kbps));
     json_object_set_new(r, "region", json_string(clean.region.c_str()));
     json_object_set_new(r, "audio_enabled", json_boolean(clean.audio_enabled));
     json_object_set_new(r, "audio_volume", json_integer(clean.audio_volume));
@@ -156,8 +152,10 @@ bool SaveStreamSettings(const StreamSettings& settings)
 
 std::string FormatStreamSettings(const StreamSettings& settings)
 {
-    return settings.label + " · " + std::to_string(settings.bitrate_kbps / 1000) +
-           " Mb/s · région " + settings.region;
+    const std::string bitrate = settings.bitrate_kbps > 0
+        ? std::to_string(settings.bitrate_kbps / 1000) + " Mb/s"
+        : std::string("auto");
+    return settings.label + " · " + bitrate + " · région " + settings.region;
 }
 
 } // namespace lunanx

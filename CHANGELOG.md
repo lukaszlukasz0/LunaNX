@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+**New features**
+- Streaming settings: choose **60 or 30 fps** and cap the video bitrate (Auto, 15, 10, 8, 6, 4
+  or 3 Mb/s) to reduce stutter on slower connections. Resolution stays at 720p with software
+  decoding.
+
 ## v2.0.1
 
 **New features**

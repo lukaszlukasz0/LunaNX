@@ -28,6 +28,8 @@ const std::vector<std::string> kVolumeValues = {"400", "800", "1200", "1600"};
 const std::vector<std::string> kBufferValues = {"30", "40", "60", "100"};
 const std::vector<std::string> kLayoutCodes = {"Switch", "Xbox"};
 const std::vector<std::string> kLibraryCodes = {"Covers", "List"};
+const std::vector<std::string> kFpsValues = {"60", "30"};
+const std::vector<std::string> kBitrateValues = {"0", "15000", "10000", "8000", "6000", "4000", "3000"};
 
 } // namespace
 
@@ -143,6 +145,27 @@ SettingsView::SettingsView()
                       Save();
                   });
     list->addView(library);
+
+    // Qualité du flux : la résolution reste à 720p, mais on peut réduire le nombre
+    // d'images ou le plafond de débit sur une connexion qui saccade.
+    auto* fps = new brls::SelectorCell();
+    fps->init(Tr("Images par seconde"), {"60 fps", "30 fps"},
+              IndexOf(kFpsValues, std::to_string(settings_.fps)), [this](int index) {
+                  settings_.fps = std::stoi(kFpsValues[index]);
+                  Save();
+              });
+    list->addView(fps);
+
+    auto* bitrate = new brls::SelectorCell();
+    bitrate->init(Tr("Débit vidéo"),
+                  {Tr("Auto (adaptatif)"), "15 Mb/s", "10 Mb/s", "8 Mb/s", "6 Mb/s",
+                   "4 Mb/s", "3 Mb/s"},
+                  IndexOf(kBitrateValues, std::to_string(settings_.bitrate_kbps)),
+                  [this](int index) {
+                      settings_.bitrate_kbps = std::stoi(kBitrateValues[index]);
+                      Save();
+                  });
+    list->addView(bitrate);
 
     auto* region = new brls::SelectorCell();
     region->init(Tr("Région du serveur"), kRegionCodes, IndexOf(kRegionCodes, settings_.region),

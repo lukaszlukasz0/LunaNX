@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -8,11 +9,13 @@ namespace lunanx
 
 struct StreamSettings
 {
-    std::string preset_id = "720p60";
-    std::string label     = "720p · 60 i/s";
+    std::string preset_id = "custom";
+    std::string label     = "720p · 60 fps";
     int width             = 1280;
     int height            = 720;
+    // 60 ou 30 images par seconde (voir Normalize).
     int fps               = 60;
+    // Plafond du débit vidéo en kbit/s ; 0 = automatique (adaptatif jusqu'à 10 Mb/s).
     int bitrate_kbps      = 10000;
     // "Auto" ou un code de région Luna (ex. "eu-west-3").
     std::string region    = "Auto";
@@ -34,10 +37,17 @@ struct StreamSettings
     std::string language = "en";
 };
 
-const std::vector<StreamSettings>& StreamPresets();
+// Budget de débit envoyé à Luna et annoncé en REMB. Les trois valeurs sont en bit/s.
+struct StreamBitrateBudget
+{
+    std::uint32_t minimum;
+    std::uint32_t start;
+    std::uint32_t maximum;
+};
+
+StreamBitrateBudget ResolveStreamBitrateBudget(int bitrate_kbps);
 StreamSettings LoadStreamSettings();
 bool SaveStreamSettings(const StreamSettings& settings);
-StreamSettings ApplyStreamPreset(const StreamSettings& current, const std::string& preset_id);
 std::string FormatStreamSettings(const StreamSettings& settings);
 
 } // namespace lunanx

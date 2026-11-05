@@ -110,14 +110,14 @@ next versions.
   - **Top 10** (current Luna ranking, when Luna provides it for your account),
   - **All games**: the complete catalog, explored live, shown as pages of 10 covers,
   - optional **simple list** view.
-- **Game streaming**: 720p at 60 fps, H.264 video, stereo audio, with bitrate adapted to your
-  network.
+- **Game streaming**: 720p H.264 video at 60 or 30 fps, stereo audio, with adaptive bitrate.
+  On a slower connection, lower the bitrate ceiling (Auto, 15, 10, 8, 6, 4 or 3 Mb/s) in Settings.
 - **Automatic server selection** based on measured latency (a server region can also be chosen
   manually).
 - **Controllers**: Joy-Con, Pro Controller and handheld mode, with **rumble**. Switch button
   labels by default (Xbox layout available); the D-pad can also drive the left stick.
-- **Settings**: language, Amazon store, sign out, library view, server region, button layout,
-  sound, volume, audio buffer, optional in-game technical overlay.
+- **Settings**: language, Amazon store, sign out, library view, frame rate, video bitrate,
+  server region, button layout, sound, volume, audio buffer, optional in-game technical overlay.
 
 ## Screenshots
 
@@ -166,7 +166,8 @@ See **[INSTALLATION.md](INSTALLATION.md)** for step-by-step instructions. In sho
 
 - **Sign in with Amazon** (Switch browser) does not work on firmware 23.x (CFW) for now: use
   **Sign in with my phone** (QR code).
-- Streaming quality is fixed at **720p 60 fps** with software decoding.
+- Streaming resolution is fixed at **720p** with software decoding. Frame rate (60 or 30 fps)
+  and the video bitrate ceiling can be changed in Settings.
 - **Application mode is required**: the Switch browser used for sign-in and the memory needed
   for streaming are not available from the Album (applet mode).
 - **Phone sign-in**: the phone or tablet must be on the same Wi-Fi network as the Switch; guest

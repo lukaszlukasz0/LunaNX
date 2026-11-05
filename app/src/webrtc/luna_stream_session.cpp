@@ -281,9 +281,9 @@ void LunaStreamSession::signaling_loop()
             std::lock_guard<std::recursive_mutex> lock(peer_mutex_);
             peer_connection_set_remote_description(pc_, answer.c_str(), SDP_TYPE_ANSWER);
             // Rapports RTCP + REMB : sans eux le serveur reste bloqué à bas débit.
-            const uint32_t max_bitrate = static_cast<uint32_t>(std::max(settings_.bitrate_kbps, 3000)) * 1000u;
-            peer_connection_set_max_receive_bitrate(pc_, max_bitrate);
-            AppendStreamLog("REMB max=" + std::to_string(max_bitrate / 1000) + " kbit/s");
+            const StreamBitrateBudget bitrate = ResolveStreamBitrateBudget(settings_.bitrate_kbps);
+            peer_connection_set_max_receive_bitrate(pc_, bitrate.maximum);
+            AppendStreamLog("REMB max=" + std::to_string(bitrate.maximum / 1000) + " kbit/s");
             remote_description_set_.store(true, std::memory_order_release);
         }
         phase_.store(Phase::Connecting);
@@ -447,10 +447,10 @@ void LunaStreamSession::send_client_startup_messages()
     display.width = settings_.width;
     display.height = settings_.height;
     display.fps = settings_.fps;
-    if (settings_.bitrate_kbps > 0)
-        display.start_bitrate = static_cast<uint32_t>(settings_.bitrate_kbps) * 1000u;
-    if (display.max_bitrate < display.start_bitrate)
-        display.max_bitrate = display.start_bitrate;
+    const StreamBitrateBudget bitrate = ResolveStreamBitrateBudget(settings_.bitrate_kbps);
+    display.min_bitrate = bitrate.minimum;
+    display.start_bitrate = bitrate.start;
+    display.max_bitrate = bitrate.maximum;
 
     const std::vector<uint8_t> messages[] = {
         input::EncodeSessionHello(),
